@@ -1,255 +1,78 @@
 import streamlit as st
 import requests
 import os
-from dotenv import load_dotenv
-import docx
 
-# Load API key from .env
-load_dotenv()
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")  # Use your Groq API key
-
-# Streamlit page config
+# ---------------- CONFIG ----------------
 st.set_page_config(
-    page_title="Future Mind AI",
-    page_icon="🤖",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_title="NoteGen AI",
+    page_icon="🧠",
+    layout="wide"
 )
 
-# Custom CSS for gradient, buttons, and UI
-st.markdown("""
-<style>
-body {
-    background: linear-gradient(135deg, #f0f3f7, #d9e6f2);
-    font-family: 'Arial', sans-serif;
-}
-h1, h2, h3 {
-    color: #1f2937;
-}
-.stButton>button {
-    background: linear-gradient(90deg,#4f46e5,#6366f1);
-    color: white;
-    border-radius: 8px;
-    padding: 0.5em 1em;
-    font-weight: bold;
-    transition: transform 0.2s;
-}
-.stButton>button:hover {
-    transform: scale(1.05);
-}
-.stTextArea>div>textarea {
-    border-radius: 10px;
-}
-</style>
-""", unsafe_allow_html=True)
+# ---------------- SIDEBAR ----------------
+st.sidebar.title("🧠 NoteGen AI")
 
-# Sidebar
-st.sidebar.image("assets/logo.png", width=120)
-st.sidebar.title("Future Mind AI")
-st.sidebar.markdown("**Your AI-powered lecture assistant!**")
-mode = st.sidebar.radio("Mode", ["Light", "Dark"])
-if mode == "Dark":
-    st.markdown('<style>body {background-color: #1f2937; color: #f3f4f6;}</style>', unsafe_allow_html=True)
+# Safe image loading (won't crash if image missing)
+try:
+    st.sidebar.image("assets/logo.png", width=120)
+except:
+    st.sidebar.info("Logo not found")
 
-# Tabs
-tab1, tab2 = st.tabs(["💬 Chat with AI", "📄 Upload & Summarize Notes"])
+st.sidebar.markdown("### AI Lecture Notes Generator")
+st.sidebar.markdown("Powered by **LLaMA 3.3 (Groq)**")
 
-# --- Chat Tab ---
-with tab1:
-    st.header("AI Chat Assistant")
-    user_input = st.text_area("Ask your question here:", placeholder="Type your question...")
+# ---------------- MAIN UI ----------------
+st.title("📘 NoteGen AI")
+st.write("Generate **clean, structured notes** using AI.")
 
-    if st.button("Generate Answer"):
-        if user_input.strip():
-            headers = {
-                "Authorization": f"Bearer {GROQ_API_KEY}",
-                "Content-Type": "application/json"
-            }
-            payload = {
-                "model": "llama3.3-8b-8192",  # LLaMA 3.3
-                "messages": [{"role": "user", "content": user_input}]
-            }
-            response = requests.post(
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers=headers,
-                json=payload
-            )
-            if response.status_code == 200:
-                result = response.json()
-                st.success(result["choices"][0]["message"]["content"])
-            else:
-                st.error("❌ Error connecting to Groq API")
-        else:
-            st.warning("⚠️ Please enter a question!")
-
-# --- Upload & Summarize Tab ---
-with tab2:
-    st.header("Upload Lecture Notes")
-    uploaded_file = st.file_uploader("Upload your text or Word file:", type=["txt", "docx"])
-
-    if uploaded_file:
-        try:
-            # Read docx or txt
-            if uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                doc = docx.Document(uploaded_file)
-                file_content = "\n".join([para.text for para in doc.paragraphs])
-            else:
-                file_content = uploaded_file.read().decode("utf-8", errors="ignore")
-
-            st.text_area("Preview", file_content, height=200)
-
-            if st.button("Generate Summary"):
-                headers = {
-                    "Authorization": f"Bearer {GROQ_API_KEY}",
-                    "Content-Type": "application/json"
-                }
-                payload = {
-                    "model": "llama3.3-8b-8192",
-                    "messages": [{"role": "user", "content": f"Summarize this:\n{file_content}"}]
-                }
-                response = requests.post(
-                    "https://api.groq.com/openai/v1/chat/completions",
-                    headers=headers,
-                    json=payload
-                )
-                if response.status_code == 200:
-                    result = response.json()
-                    summary = result["choices"][0]["message"]["content"]
-                    st.success("✅ Summary Generated!")import streamlit as st
-import requests
-import os
-from dotenv import load_dotenv
-import docx
-
-# Load API key from .env
-load_dotenv()
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")  # Your Groq API key here
-
-# Streamlit page config
-st.set_page_config(
-    page_title="Future Mind AI",
-    page_icon="🤖",
-    layout="wide",
-    initial_sidebar_state="expanded"
+text_input = st.text_area(
+    "✍️ Paste your lecture text here:",
+    height=250
 )
 
-# Custom CSS for gradient and UI
-st.markdown("""
-<style>
-body {
-    background: linear-gradient(135deg, #f0f3f7, #d9e6f2);
-    font-family: 'Arial', sans-serif;
-}
-h1, h2, h3 {
-    color: #1f2937;
-}
-.stButton>button {
-    background: linear-gradient(90deg,#4f46e5,#6366f1);
-    color: white;
-    border-radius: 8px;
-    padding: 0.5em 1em;
-    font-weight: bold;
-    transition: transform 0.2s;
-}
-.stButton>button:hover {
-    transform: scale(1.05);
-}
-.stTextArea>div>textarea {
-    border-radius: 10px;
-}
-</style>
-""", unsafe_allow_html=True)
+generate_btn = st.button("🚀 Generate Notes")
 
-# Sidebar
-st.sidebar.title("Future Mind AI")
-st.sidebar.markdown("**Your AI-powered lecture assistant!**")
-mode = st.sidebar.radio("Mode", ["Light", "Dark"])
-if mode == "Dark":
-    st.markdown('<style>body {background-color: #1f2937; color: #f3f4f6;}</style>', unsafe_allow_html=True)
+# ---------------- API SETTINGS ----------------
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")  # safer than hardcoding
+API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
-# Tabs
-tab1, tab2 = st.tabs(["💬 Chat with AI", "📄 Upload & Summarize Notes"])
+HEADERS = {
+    "Authorization": f"Bearer {GROQ_API_KEY}",
+    "Content-Type": "application/json"
+}
 
-# --- Chat Tab ---
-with tab1:
-    st.header("AI Chat Assistant")
-    user_input = st.text_area("Ask your question here:", placeholder="Type your question...")
-
-    if st.button("Generate Answer"):
-        if user_input.strip():
-            headers = {
-                "Authorization": f"Bearer {GROQ_API_KEY}",
-                "Content-Type": "application/json"
+# ---------------- AI FUNCTION ----------------
+def generate_notes(text):
+    payload = {
+        "model": "llama-3.3-70b-versatile",
+        "messages": [
+            {
+                "role": "system",
+                "content": "You are an expert note-making assistant."
+            },
+            {
+                "role": "user",
+                "content": f"Create clear, structured lecture notes:\n{text}"
             }
-            payload = {
-                "model": "llama3.3-8b-8192",  # LLaMA 3.3
-                "messages": [{"role": "user", "content": user_input}]
-            }
-            response = requests.post(
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers=headers,
-                json=payload
-            )
-            if response.status_code == 200:
-                result = response.json()
-                st.success(result["choices"][0]["message"]["content"])
-            else:
-                st.error("❌ Error connecting to Groq API")
-        else:
-            st.warning("⚠️ Please enter a question!")
+        ],
+        "temperature": 0.3
+    }
 
-# --- Upload & Summarize Tab ---
-with tab2:
-    st.header("Upload Lecture Notes")
-    uploaded_file = st.file_uploader("Upload your text or Word file:", type=["txt", "docx"])
+    response = requests.post(API_URL, headers=HEADERS, json=payload)
 
-    if uploaded_file:
-        try:
-            # Read docx or txt
-            if uploaded_file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                doc = docx.Document(uploaded_file)
-                file_content = "\n".join([para.text for para in doc.paragraphs])
-            else:
-                file_content = uploaded_file.read().decode("utf-8", errors="ignore")
+    if response.status_code == 200:
+        return response.json()["choices"][0]["message"]["content"]
+    else:
+        return f"❌ Error: {response.text}"
 
-            st.text_area("Preview", file_content, height=200)
+# ---------------- BUTTON ACTION ----------------
+if generate_btn:
+    if not text_input.strip():
+        st.warning("⚠️ Please enter lecture text first.")
+    else:
+        with st.spinner("Generating notes..."):
+            notes = generate_notes(text_input)
 
-            if st.button("Generate Summary"):
-                headers = {
-                    "Authorization": f"Bearer {GROQ_API_KEY}",
-                    "Content-Type": "application/json"
-                }
-                payload = {
-                    "model": "llama3.3-8b-8192",
-                    "messages": [{"role": "user", "content": f"Summarize this:\n{file_content}"}]
-                }
-                response = requests.post(
-                    "https://api.groq.com/openai/v1/chat/completions",
-                    headers=headers,
-                    json=payload
-                )
-                if response.status_code == 200:
-                    result = response.json()
-                    summary = result["choices"][0]["message"]["content"]
-                    st.success("✅ Summary Generated!")
-                    st.text_area("Summary", summary, height=200)
-                    st.download_button(
-                        label="📥 Download Summary",
-                        data=summary,
-                        file_name="Lecture_Summary.txt"
-                    )
-                else:
-                    st.error("❌ Error connecting to Groq API")
-        except Exception as e:
-            st.error(f"Error reading file: {e}")
-
-                    st.text_area("Summary", summary, height=200)
-                    st.download_button(
-                        label="📥 Download Summary",
-                        data=summary,
-                        file_name="Lecture_Summary.txt"
-                    )
-                else:
-                    st.error("❌ Error connecting to Groq API")
-        except Exception as e:
-            st.error(f"Error reading file: {e}")
+        st.success("✅ Summary Generated!")
+        st.markdown("### 📄 Generated Notes")
+        st.write(notes)
