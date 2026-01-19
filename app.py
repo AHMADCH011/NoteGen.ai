@@ -33,7 +33,7 @@ text_input = st.text_area(
 generate_btn = st.button("🚀 Generate Notes")
 
 # ---------------- API SETTINGS ----------------
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")  # safer than hardcoding
+GROQ_API_KEY = os.getenv("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")  # safer than hardcoding
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 HEADERS = {
