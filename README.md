@@ -1,0 +1,2 @@
+# NoteGen.ai
+NoteGen.ai
