@@ -1,0 +1,6 @@
+streamlit
+requests
+python-dotenv
+pandas
+python-docx
+streamlit-option-menu
