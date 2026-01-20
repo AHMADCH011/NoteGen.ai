@@ -1,78 +1,53 @@
+import os
 import streamlit as st
 import requests
-import os
 
-# ---------------- CONFIG ----------------
-st.set_page_config(
-    page_title="NoteGen AI",
-    page_icon="🧠",
-    layout="wide"
-)
+# Read API key from Hugging Face Secrets
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    st.error("❌ GROQ_API_KEY not set! Add it in Settings → Variables & Secrets.")
+    st.stop()
 
-# ---------------- SIDEBAR ----------------
-st.sidebar.title("🧠 NoteGen AI")
+# Page setup
+st.set_page_config(page_title="🧠 NoteGen AI", page_icon="📝", layout="centered")
+st.title("🧠 NoteGen AI")
+st.subheader("Generate lecture notes automatically using AI")
 
-# Safe image loading (won't crash if image missing)
-try:
-    st.sidebar.image("assets/logo.png", width=120)
-except:
-    st.sidebar.info("Logo not found")
+# User input
+lecture_text = st.text_area("Paste your lecture/text here:", height=250)
+summary_length = st.slider("Summary Length (approx):", 50, 500, 200)
+generate_button = st.button("Generate Notes")
 
-st.sidebar.markdown("### AI Lecture Notes Generator")
-st.sidebar.markdown("Powered by **LLaMA 3.3 (Groq)**")
-
-# ---------------- MAIN UI ----------------
-st.title("📘 NoteGen AI")
-st.write("Generate **clean, structured notes** using AI.")
-
-text_input = st.text_area(
-    "✍️ Paste your lecture text here:",
-    height=250
-)
-
-generate_btn = st.button("🚀 Generate Notes")
-
-# ---------------- API SETTINGS ----------------
-GROQ_API_KEY = os.getenv("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")  # safer than hardcoding
-API_URL = "https://api.groq.com/openai/v1/chat/completions"
-
-HEADERS = {
-    "Authorization": f"Bearer {GROQ_API_KEY}",
-    "Content-Type": "application/json"
-}
-
-# ---------------- AI FUNCTION ----------------
-def generate_notes(text):
+# Function to call Groq API
+def generate_notes(text, max_tokens=200):
+    url = "https://api.groq.ai/v1/completions"
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
     payload = {
-        "model": "llama-3.3-70b-versatile",
-        "messages": [
-            {
-                "role": "system",
-                "content": "You are an expert note-making assistant."
-            },
-            {
-                "role": "user",
-                "content": f"Create clear, structured lecture notes:\n{text}"
-            }
-        ],
+        "model": "llama3-8b-8192",  # Free Groq model
+        "prompt": f"Summarize the following lecture into clear notes:\n{text}\n\nNotes:",
+        "max_output_tokens": max_tokens,
         "temperature": 0.3
     }
+    try:
+        response = requests.post(url, headers=headers, json=payload, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+        return data["completions"][0]["text"].strip()
+    except Exception as e:
+        st.error(f"❌ API Request Failed: {e}")
+        return None
 
-    response = requests.post(API_URL, headers=HEADERS, json=payload)
-
-    if response.status_code == 200:
-        return response.json()["choices"][0]["message"]["content"]
-    else:
-        return f"❌ Error: {response.text}"
-
-# ---------------- BUTTON ACTION ----------------
-if generate_btn:
-    if not text_input.strip():
-        st.warning("⚠️ Please enter lecture text first.")
+# Generate notes
+if generate_button:
+    if not lecture_text.strip():
+        st.warning("⚠ Please enter some text to generate notes.")
     else:
         with st.spinner("Generating notes..."):
-            notes = generate_notes(text_input)
-
-        st.success("✅ Summary Generated!")
-        st.markdown("### 📄 Generated Notes")
-        st.write(notes)
+            notes = generate_notes(lecture_text, max_tokens=summary_length)
+        if notes:
+            st.success("✅ Notes Generated Successfully!")
+            st.text_area("Generated Notes:", notes, height=300)
+            st.download_button("💾 Download Notes", notes, file_name="lecture_notes.txt")
